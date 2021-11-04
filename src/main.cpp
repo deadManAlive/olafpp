@@ -1,3 +1,6 @@
+#include <string>
+#include <fmt/core.h>
+
 #include "structure.hpp"
 // #include "util.hpp"
 

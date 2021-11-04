@@ -1,8 +1,9 @@
 #pragma once
 
+#include <iostream>
+#include <fstream>
 #include <array>
-#include <fmt/core.h>
-#include <string>
+#include <vector>
 
 namespace riff{
     typedef struct RIFFHEADER{
@@ -21,89 +22,48 @@ namespace riff{
         uint16_t blockAlign;
         uint16_t bitDepths;
     } whead;
-
-    template<typename T, uint32_t SIZE>
-    struct wdata{
-        char subchunk2ID[4]; //"data"
-        uint32_t subchunk2Size;
-        std::array<T, SIZE> data_container;
-    };    
 }
 
-//RAII?
-namespace structure{
-    class rhead{
+namespace riffio{
+    class Header{ //and Infos
         private:
-            char chunkID[4];
-            uint32_t chunkSize;
-            char format[4];
+            //part of file with exact size & position
+            struct FHEAD { 
+                uint8_t chunkID[4];        //4
+                uint32_t chunkSize;     //4
+                uint8_t format[4];         //4
+                uint8_t subchunk1ID[4];    //4
+                uint32_t subchunk1Size; //4
+                uint16_t audioFormat;   //2
+                uint16_t numChannels;   //2
+                uint32_t sampleRate;    //4
+                uint32_t byteRate;      //4
+                uint16_t blockAlign;    //2
+                uint16_t bitDepth;      //2
+            } main_header;               //36
+
+            //interpolated
+            bool dataPosition;
         public:
-            std::string getChunkID(){
-                return fmt::format("{}{}{}{}", chunkID[0], chunkID[1], chunkID[2], chunkID[3]);
-            }
-            uint32_t getChunkSize(){
-                return chunkSize;
-            }
-            std::string getFormat(){
-                return fmt::format("{}{}{}{}", format[0], format[1], format[2], format[3]);
-            }
+            //C/D
+            Header(std::ifstream& input_stream);
+
+            //header methods
+            size_t getFileSizeInBytes();
+            uint16_t getAudioFormat();
+            uint16_t getNumChannels();
+            uint32_t getSampleRate();
+            uint32_t getByteRate();
+            uint16_t getBlockAlign();
+            uint16_t getBitDepth();
+            bool isRIFF();
+            bool isWAVE();
     };
 
-    class whead{
+    class Data : public Header{
         private:
-            char subchunk1ID[4]; //"fmt "
-            uint32_t subchunk1Size;
-            uint16_t audioFormat; //audio storage format (PCM,...)
-            uint16_t numChannels;
-            uint32_t sampleRate;
-            uint32_t byteRate;
-            uint16_t blockAlign;
-            uint16_t bitDepth;
+            std::vector<double> data_container;
         public:
-            std::string getSubChunk1ID(){
-                return fmt::format("{}{}{}{}", subchunk1ID[0], subchunk1ID[1], subchunk1ID[2], subchunk1ID[3]);
-            }
-            uint32_t getSubChunk1Size(){
-                return subchunk1Size;
-            }
-            uint16_t getAudioFormat(){
-                return audioFormat;
-            }
-            uint16_t getNumChannels(){
-                return numChannels;
-            }
-            uint32_t getSampleRate(){
-                return sampleRate;
-            }
-            uint32_t getByteRate(){
-                return byteRate;
-            }
-            uint16_t getBlockAlign(){
-                return blockAlign;
-            }
-            uint16_t getBitDepth(){
-                return bitDepth;
-            }
-    };
-
-    template<typename T, size_t SIZE>
-    class wdata{
-        private:
-            char subchunk2ID[4];
-            uint32_t subchunk2Size;
-            std::array<T, SIZE> data_container;
-        public:
-            std::string getSubChunk2ID(){
-                return fmt::format("{}{}{}{}", subchunk2ID[0], subchunk2ID[1], subchunk2ID[2], subchunk2ID[3]);
-            }
-            uint32_t getSubChunk2Size(){
-                return subchunk2Size;
-            }
-            T getDataAt(size_t pos){
-                return data_container.at(pos);
-            }
-            std::array<T, SIZE> getDataContainer(){
-                return data_container;
-            }
+            Data(std::ifstream& input_stream);
     };
 }
