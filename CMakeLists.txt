@@ -6,8 +6,6 @@ if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-# INCLUDE_DIRECTORIES(D:/vcpkg/installed/x64-windows/include)
-# LINK_DIRECTORIES(D:/vcpkg/installed/x64-windows/lib)
 find_package(fmt CONFIG REQUIRED)
 
 include_directories(include)
