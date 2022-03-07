@@ -6,6 +6,7 @@ if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+# using vcpkg with x64-windows triplet
 find_package(fmt CONFIG REQUIRED)
 find_package(SndFile CONFIG REQUIRED)
 
@@ -16,7 +17,7 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(OLaF ${SOURCES})
 
 target_link_libraries(OLaF PRIVATE
-    fmt::fmt-header-only
+    fmt::fmt
     SndFile::sndfile
 )
 

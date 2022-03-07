@@ -2,7 +2,7 @@
 #include <fmt/core.h>
 #include <exception>
 
-#include "structure.hpp"
+#include <structure.hpp>
 
 using namespace riffio;
 
