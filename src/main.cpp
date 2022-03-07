@@ -1,8 +1,8 @@
 #include <string>
 #include <fmt/core.h>
+// #include <sndfile.hh>
 
-#include "structure.hpp"
-// #include "util.hpp"
+#include <structure.hpp>
 
 int main(int argc, char **argv){
     if(argc < 2){
@@ -44,9 +44,9 @@ int main(int argc, char **argv){
     fread(&sample_wav_header_buffer, 24, 1, file_handle);
 
     fmt::print(fmt::format("FMT:\t\t\t\"{}{}{}{}\"\n", sample_wav_header_buffer.subchunk1ID[0],
-                                       sample_wav_header_buffer.subchunk1ID[1],
-                                       sample_wav_header_buffer.subchunk1ID[2],
-                                       sample_wav_header_buffer.subchunk1ID[3]));
+                                                       sample_wav_header_buffer.subchunk1ID[1],
+                                                       sample_wav_header_buffer.subchunk1ID[2],
+                                                       sample_wav_header_buffer.subchunk1ID[3]));
 
     fmt::print(fmt::format("Audio format:\t\t{}\n", sample_wav_header_buffer.audioFormat==1?"PCM":"Not a PCM"));
     fmt::print(fmt::format("Channel numbers:\t{}\n", sample_wav_header_buffer.numChannels));

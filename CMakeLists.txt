@@ -7,6 +7,7 @@ if(MSVC)
 endif()
 
 find_package(fmt CONFIG REQUIRED)
+find_package(SndFile CONFIG REQUIRED)
 
 include_directories(include)
 
@@ -15,7 +16,8 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(OLaF ${SOURCES})
 
 target_link_libraries(OLaF PRIVATE
-    fmt::fmt
+    fmt::fmt-header-only
+    SndFile::sndfile
 )
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
