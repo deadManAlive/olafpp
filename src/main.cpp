@@ -6,44 +6,70 @@
 
 #include <convolve.h>
 
+namespace fs = std::filesystem;
+
 int main(int argc, char **argv){
+    //================CLI args test================//
+
     if(argc < 2){
         fmt::print("No file provided!\n");
-        return 2;
-    }
-    else if(!std::filesystem::exists(argv[1])){
-        fmt::print(fmt::format("File \"{}\" not found!\n", argv[1]));
         return 2;
     }
 
     //================OPENING FILE================//
 
-    SndfileHandle file = SndfileHandle(argv[1]);
+    fs::path sample_file(argv[1]);
+    
+    if(!fs::exists(sample_file)){
+        fmt::print(fmt::format("File \"{}\" not found!\n", argv[1]));
+        return 2;
+    }
 
-    fmt::print(fmt::format("Opened {}.\n", argv[1]));
+    SndfileHandle file = SndfileHandle(sample_file.string().c_str());
+
+    fmt::print(fmt::format("Opened {} from {}.\n", sample_file.filename().string(), fs::absolute(sample_file).string()));
     fmt::print(fmt::format("    Sample rate : {}\n", file.samplerate()));
     fmt::print(fmt::format("    Channels    : {}\n", file.channels()));
-    fmt::print(fmt::format("    Format      : {}\n", file.format()));
 
     std::vector<double> samples(file.frames());
     file.read(&samples[0], int(file.frames()));
 
     fmt::print(fmt::format("    Samples     : {}\n", samples.size()));
 
+    // check http://www.mega-nerd.com/libsndfile/api.html#note2 for formats
+    auto type = file.format() & SF_FORMAT_TYPEMASK;
+    auto subtype = file.format() & SF_FORMAT_SUBMASK;
+
+    fmt::print(fmt::format("    Type        : {:#04x}\n", type));
+    fmt::print(fmt::format("    Subtype     : {:#04x}\n", subtype));
+
     //================CONVOLUTION================
 
-    std::vector<double> impulse{1, 0.5, 0.25, 0.125};
+    std::vector<double> impulse{1, 1/4.0, 1/16.0};
 
     auto start = std::chrono::high_resolution_clock::now(); //clock in
 
-    std::vector<double> res = convolve(samples, impulse); //res to output
+    std::vector<double> res = convolve(samples, impulse); //res to output, TODO: APPARENTLY DATA ARE INTERLEAVED IN THE BUFFER
 
     auto stop = std::chrono::high_resolution_clock::now(); //clock out
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
-    //================POST PROCESS================
+    //================POST PROCESS & SAVE================
 
-    fmt::print(fmt::format("Finished convolving {} by {} samples in {} ms.\n", samples.size(), impulse.size(), duration.count()));
+    fmt::print(fmt::format("Finished convolving {} by {} = {} samples in {} ms.\n", samples.size(), impulse.size(), res.size(), duration.count()));
+
+    std::string output_file = fmt::format("{}/{}_OUT{}", sample_file.parent_path().string(), sample_file.stem().string(), sample_file.extension().string());
+
+    // if(fs::exists(output_file)){
+    //     fmt::print(fmt::format("Can't write {}. The file already exists!\n", output_file));
+    //     return 2;
+    // }
+
+    SndfileHandle result = SndfileHandle(output_file.c_str(), SFM_WRITE, file.format(), file.channels(), file.samplerate());
+
+    result.write(&res[0], static_cast<sf_count_t>(res.size()));
+
+    fmt::print(fmt::format("Output saved as {}\n", output_file));
 
     return 0;
 }
