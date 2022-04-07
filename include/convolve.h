@@ -2,16 +2,9 @@
 
 #include <vector>
 
-template <typename T>
-auto convolve(std::vector<T> m1, std::vector<T> m2){
-    std::vector<T> res(m1.size() + m2.size() - 1);
+using split_t = std::vector<std::vector<double>>; //channel-split in vector of vectors
+using stream_t = std::vector<double>; //std::vector alias for unsplitted stream
 
-    for(size_t i = 0, j; i < m1.size(); i++){
-        j = i;
-        for(const auto em2 : m2){
-            res[j++] += m1[i] * em2;
-        }
-    }
-
-    return res;
-}
+std::vector<double> convolve(stream_t m1, std::vector<double> m2);
+split_t deinterleave(stream_t framesstream, int nchannel, bool force_channel_equal_size = true);
+stream_t interleave(split_t splitstream, int nchannel);

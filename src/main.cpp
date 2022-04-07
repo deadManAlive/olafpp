@@ -9,14 +9,14 @@
 namespace fs = std::filesystem;
 
 int main(int argc, char **argv){
-    //================CLI args test================//
+    //================CLI args test======================//
 
     if(argc < 2){
         fmt::print("No file provided!\n");
         return 2;
     }
 
-    //================OPENING FILE================//
+    //================OPENING FILE=======================//
 
     fs::path sample_file(argv[1]);
     
@@ -31,7 +31,7 @@ int main(int argc, char **argv){
     fmt::print(fmt::format("    Sample rate : {}\n", file.samplerate()));
     fmt::print(fmt::format("    Channels    : {}\n", file.channels()));
 
-    std::vector<double> samples(file.frames());
+    stream_t samples(file.frames());
     file.read(&samples[0], int(file.frames()));
 
     fmt::print(fmt::format("    Samples     : {}\n", samples.size()));
@@ -43,18 +43,29 @@ int main(int argc, char **argv){
     fmt::print(fmt::format("    Type        : {:#04x}\n", type));
     fmt::print(fmt::format("    Subtype     : {:#04x}\n", subtype));
 
-    //================CONVOLUTION================
+    //================PRE-PROCESS: DEINTERLEAVE==========//
 
-    std::vector<double> impulse{1, 1/4.0, 1/16.0};
+    split_t splitchannel;
+
+    try{
+        splitchannel = deinterleave(samples, file.channels());
+    }
+    catch(std::exception const& err){
+        fmt::print(fmt::format("{}\n", err.what()));
+    }//TODO: deinterlevae-then-convolve OR convolve-with-deinterleave implementation??
+
+    //================CONVOLUTION========================//
+
+    stream_t impulse{1, 1/4.0, 1/16.0};
 
     auto start = std::chrono::high_resolution_clock::now(); //clock in
 
-    std::vector<double> res = convolve(samples, impulse); //res to output, TODO: APPARENTLY DATA ARE INTERLEAVED IN THE BUFFER
+    stream_t res = convolve(samples, impulse); //res to output, TODO:APPARENTLY DATA ARE INTERLEAVED IN THE BUFFER:deil func. written
 
     auto stop = std::chrono::high_resolution_clock::now(); //clock out
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
-    //================POST PROCESS & SAVE================
+    //================POST PROCESS & SAVE================//
 
     fmt::print(fmt::format("Finished convolving {} by {} = {} samples in {} ms.\n", samples.size(), impulse.size(), res.size(), duration.count()));
 
