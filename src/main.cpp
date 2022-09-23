@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string>
 #include <fmt/core.h>
 #include <sndfile.hh>
@@ -13,7 +14,7 @@ int main(int argc, char **argv){
 
     if(argc < 2){
         fmt::print("No file provided!\n");
-        return 2;
+        return EXIT_FAILURE;
     }
 
     //================OPENING FILE=======================//
@@ -22,7 +23,7 @@ int main(int argc, char **argv){
     
     if(!fs::exists(sample_file)){
         fmt::print(fmt::format("File \"{}\" not found!\n", argv[1]));
-        return 2;
+        return EXIT_FAILURE;
     }
 
     SndfileHandle file = SndfileHandle(sample_file.string().c_str());
@@ -31,7 +32,7 @@ int main(int argc, char **argv){
     fmt::print(fmt::format("    Sample rate : {}\n", file.samplerate()));
     fmt::print(fmt::format("    Channels    : {}\n", file.channels()));
 
-    stream_t samples(file.frames());
+    stream_t samples((size_t)file.frames());
     file.read(&samples[0], int(file.frames()));
 
     fmt::print(fmt::format("    Samples     : {}\n", samples.size()));
@@ -48,7 +49,7 @@ int main(int argc, char **argv){
     split_t splitchannel;
 
     try{
-        splitchannel = deinterleave(samples, file.channels());
+        splitchannel = deinterleave(samples, static_cast<size_t>(file.channels()));
     }
     catch(std::exception const& err){
         fmt::print(fmt::format("{}\n", err.what()));
@@ -82,5 +83,5 @@ int main(int argc, char **argv){
 
     fmt::print(fmt::format("Output saved as {}\n", output_file));
 
-    return 0;
+    return EXIT_SUCCESS;
 }
